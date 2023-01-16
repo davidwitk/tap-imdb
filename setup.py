@@ -13,6 +13,7 @@ setup(
       'singer-python==5.13.0'
    ],
    packages=["tap_imdb"],
+   package_dir={"tap_imdb": "tap_imdb"},
    entry_points={
       'console_scripts': ['tap-imdb=tap_imdb:main']
    }
