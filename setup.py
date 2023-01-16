@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from setuptools import setup
 
 setup(
@@ -11,6 +12,7 @@ setup(
       'requests==2.28.1', 
       'singer-python==5.13.0'
    ],
+   packages=["tap_mubi"],
    entry_points={
       'console_scripts': ['tap-imdb=tap_imdb:main']
    }

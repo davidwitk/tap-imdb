@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from tap_imdb.sync import sync_imdb_top_250
 
 def main():
