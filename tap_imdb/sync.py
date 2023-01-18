@@ -60,7 +60,7 @@ def sync_imdb_top_250():
             'title': {'type': 'string'},
             "year": {"type": "integer"},
             "rank": {"type": "integer"},
-            "rating": {"type": "number"},
+            "rating": {"type": "string"},
             "rating_count": {"type": "integer"},
             "link": {"type": "string"},
             "extracted_at": {"type": "string"}
