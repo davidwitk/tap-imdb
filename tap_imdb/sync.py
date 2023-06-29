@@ -1,43 +1,56 @@
-#! python3
-# get_imdb_top_250.py - Downloads information on the 250 movies on IMDb.
-
-import requests
-import os
 import bs4
-import re
 import datetime
-import json
 import singer
 import hashlib
-import logging
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+import time
 
 def get_imdb_top_250():
-    url = 'https://www.imdb.com/chart/top/' 
-    headers = {"Accept-Language": "en-US,en;q=0.5"}  # to get the movie titles in English language
+    
+    # Set Chrome webdriver
+    options = Options()
+    options.add_argument("--headless")
+    driver = webdriver.Chrome(options=options)  
+    
+    # Request page
+    driver.get('https://www.imdb.com/chart/top/')
 
-    res = requests.get(url, headers=headers)
-    res.raise_for_status()
+    # Select detailed view (this is why we actually use Selenium now)
+    driver.find_element(By.ID, 'list-view-option-detailed').click()
 
-    return res
+    # Scroll to bottom of the page due to dynamic page loading
+    SCROLL_PAUSE_TIME = 0.5
+    last_height = driver.execute_script("return document.body.scrollHeight") # Get scroll height
+    while True:
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);") # Scroll down to bottom
+        time.sleep(SCROLL_PAUSE_TIME) # Wait to load page
+        new_height = driver.execute_script("return document.body.scrollHeight") # Calculate new scroll height and compare with last scroll height
+        if new_height == last_height:
+            break
+        last_height = new_height
 
+    soup = bs4.BeautifulSoup(driver.page_source, 'html.parser')
+    driver.close()
+
+    return soup 
 
 def sync_imdb_top_250():
     
     res = get_imdb_top_250()
+    movies_soup = res.find_all(class_='ipc-metadata-list-summary-item')
+    extracted_at = datetime.datetime.now().isoformat()
 
     movies = []
-    extracted_at = datetime.datetime.now().isoformat()
-    soup = bs4.BeautifulSoup(res.text, 'html.parser')
+    for movie in movies_soup: 
 
-    for movie in soup.select('div[class="lister"] tr'):
-        if movie.select('td a') == []:
-            continue
-        title = movie.select('td[class="titleColumn"] a')[0].string
-        year = int(movie.select('td[class="titleColumn"] span[class="secondaryInfo"]')[0].string.replace('(','').replace(')',''))
-        rank = int(movie.select('td[class="titleColumn"]')[0].contents[0].strip().replace('.', ''))
-        rating = float(movie.select('td[class="ratingColumn imdbRating"] strong')[0].string)
-        rating_count = int(re.findall(r'\d+', movie.select('td[class="ratingColumn imdbRating"] strong')[0]['title'].replace(',','').replace('.',''))[1])
-        link = 'https://imdb.com' + movie.select('td[class="titleColumn"] a')[0]['href']
+        title = movie.find(class_='ipc-title__text').get_text().split('.')[1].strip()
+        year = movie.find_all(class_='sc-14dd939d-6')[0].get_text()
+        rank = movie.find(class_='ipc-title__text').get_text().split('.')[0]
+        rating = movie.find("span", class_="ipc-rating-star").get_text()
+        rating_count = movie.find("div", class_="sc-86b9674b-0").get_text().replace('Votes','').replace(',','').replace('.','')
+        link = 'https://imdb.com' + movie.select("a", class_='ipc-title-link-wrapper')[0]['href'].split('?')[0]
         id = hashlib.md5((title + extracted_at).encode('utf-8')).hexdigest() 
 
         data = {
