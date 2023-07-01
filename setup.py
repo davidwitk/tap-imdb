@@ -9,8 +9,8 @@ setup(
 	classifiers=["Programming Language :: Python :: 3 :: Only"],
    install_requires=[
       'beautifulsoup4==4.11.1', 
-      'requests==2.28.1', 
-      'singer-python==5.13.0'
+      'singer-python==5.13.0',
+      'selenium==4.10.0'
    ],
    packages=["tap_imdb"],
    package_dir={"tap_imdb": "tap_imdb"},
