@@ -64,7 +64,7 @@ def sync_imdb_top_250():
     for movie in movies_soup: 
 
         title = movie.find(class_='ipc-title__text').get_text().split('.', 1)[1].strip()
-        year = movie.find_all(class_='sc-14dd939d-6')[0].get_text()
+        year = movie.find_all(class_='sc-b85248f1-6')[0].get_text()
         rank = movie.find(class_='ipc-title__text').get_text().split('.', 1)[0]
         rating = movie.find("span", class_="ipc-rating-star").get_text()
         rating_count = movie.find("div", class_="sc-86b9674b-0").get_text().replace('Votes','').replace(',','').replace('.','')
