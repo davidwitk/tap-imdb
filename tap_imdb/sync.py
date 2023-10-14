@@ -26,11 +26,11 @@ def get_imdb_top_250():
     driver.find_element(By.ID, 'list-view-option-detailed').click()
 
     # Scroll to bottom of the page due to dynamic page loading
-    SCROLL_PAUSE_TIME = 0.5
+    scroll_pause_time = 0.5
     last_height = driver.execute_script("return document.body.scrollHeight") # Get scroll height
     while True:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);") # Scroll down to bottom
-        time.sleep(SCROLL_PAUSE_TIME) # Wait to load page
+        time.sleep(scroll_pause_time) # Wait to load page
         new_height = driver.execute_script("return document.body.scrollHeight") # Calculate new scroll height and compare with last scroll height
         if new_height == last_height:
             break
