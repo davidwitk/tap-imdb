@@ -21,6 +21,7 @@ def get_imdb_top_250():
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--remote-debugging-pipe")
     driver = webdriver.Chrome(options=options)
 
     # Request page
