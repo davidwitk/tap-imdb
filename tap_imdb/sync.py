@@ -6,6 +6,8 @@ import logging
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import chromedriver_autoinstaller
 import time
 
@@ -29,7 +31,7 @@ def get_imdb_top_250():
     driver.get('https://www.imdb.com/chart/top/')
 
     # Select detailed view (this is why we actually use Selenium)
-    driver.find_element(By.ID, 'list-view-option-detailed').click()
+    WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.ID, 'list-view-option-detailed'))).click()
 
     # Scroll to bottom of the page due to dynamic page loading
     scroll_pause_time = 0.5
