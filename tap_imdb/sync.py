@@ -31,7 +31,11 @@ def get_imdb_top_250():
     driver.get('https://www.imdb.com/chart/top/')
 
     # Select detailed view (this is why we actually use Selenium)
-    WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.ID, 'list-view-option-detailed'))).click()
+    detailed_view = driver.find_element(By.ID, 'list-view-option-detailed')
+    wait = WebDriverWait(driver, 10)
+    wait.until(EC.visibility_of(detailed_view))
+    time.sleep(0.5)
+    driver.execute_script("arguments[0].click();", detailed_view)
 
     # Scroll to bottom of the page due to dynamic page loading
     scroll_pause_time = 0.5
