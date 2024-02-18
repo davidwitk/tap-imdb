@@ -5,25 +5,37 @@ import hashlib
 import logging
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import chromedriver_autoinstaller
 import time
 
 def get_imdb_top_250():
     
-    logging.info('Setting Firefox driver.')
+    logging.info('Setting Chrome driver.')
     
-    # Set Firefox webdriver
+    # Set Chrome webdriver
+    chromedriver_autoinstaller.install() 
     options = Options()
-    options.add_argument("--headless")
-    options.set_preference('intl.accept_languages', 'en-US, en')
-    driver = webdriver.Firefox(options=options)
+    user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.50 Safari/537.36'
+    options.add_argument(f'user-agent={user_agent}')
+    options.add_argument("--headless=new")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--remote-debugging-pipe")
+    driver = webdriver.Chrome(options=options)
 
     # Request page
     logging.info(f'Requesting the website and parsing the HTML.')
     driver.get('https://www.imdb.com/chart/top/')
 
-    # Select detailed view (this is why we actually use Selenium now)
-    driver.find_element(By.ID, 'list-view-option-detailed').click()
+    # Select detailed view (this is why we actually use Selenium)
+    detailed_view = driver.find_element(By.ID, 'list-view-option-detailed')
+    wait = WebDriverWait(driver, 10)
+    wait.until(EC.visibility_of(detailed_view))
+    time.sleep(0.5)
+    driver.execute_script("arguments[0].click();", detailed_view)
 
     # Scroll to bottom of the page due to dynamic page loading
     scroll_pause_time = 0.5
