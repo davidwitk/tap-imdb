@@ -6,6 +6,8 @@ import logging
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 
 def get_imdb_top_250():
@@ -22,8 +24,11 @@ def get_imdb_top_250():
     logging.info(f'Requesting the website and parsing the HTML.')
     driver.get('https://www.imdb.com/chart/top/')
 
-    # Select detailed view (this is why we actually use Selenium now)
-    driver.find_element(By.ID, 'list-view-option-detailed').click()
+    # Select detailed view (this is why we actually use Selenium)
+    detailed_view = driver.find_element(By.ID, 'list-view-option-detailed')
+    wait = WebDriverWait(driver, 10)
+    wait.until(EC.visibility_of(detailed_view))
+    driver.execute_script("arguments[0].click();", detailed_view)
 
     # Scroll to bottom of the page due to dynamic page loading
     scroll_pause_time = 0.5
@@ -38,7 +43,7 @@ def get_imdb_top_250():
 
     soup = bs4.BeautifulSoup(driver.page_source, 'html.parser')
 
-    driver.close()
+    driver.quit()
 
     return soup 
 
