@@ -10,8 +10,7 @@ setup(
    install_requires=[
       'beautifulsoup4==4.12.3', 
       'singer-python==6.0.0',
-      'selenium==4.18.0',
-      'requests==2.31.0'
+      'requests==2.31.0',
    ],
    packages=["tap_imdb"],
    package_dir={"tap_imdb": "tap_imdb"},
