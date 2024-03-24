@@ -1,67 +1,40 @@
+import requests
 import bs4
 import datetime
 import singer
 import hashlib
-import logging
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import time
+import json
 
 def get_imdb_top_250():
-    
-    logging.info('Setting Firefox driver.')
-    
-    # Set Firefox webdriver
-    options = Options()
-    options.add_argument("--headless")
-    options.set_preference('intl.accept_languages', 'en-US, en')
-    driver = webdriver.Firefox(options=options)
+    url = 'https://www.imdb.com/chart/top/' 
+    headers = {
+        "Accept-Language": "en-US,en;q=0.5", # to get the movie titles in English language
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"
+        }  
 
-    # Request page
-    logging.info(f'Requesting the website and parsing the HTML.')
-    driver.get('https://www.imdb.com/chart/top/')
+    res = requests.get(url, headers=headers)
+    res.raise_for_status()
 
-    # Select detailed view (this is why we actually use Selenium)
-    detailed_view = driver.find_element(By.ID, 'list-view-option-detailed')
-    wait = WebDriverWait(driver, 10)
-    wait.until(EC.visibility_of(detailed_view))
-    driver.execute_script("arguments[0].click();", detailed_view)
+    return res
 
-    # Scroll to bottom of the page due to dynamic page loading
-    scroll_pause_time = 0.5
-    last_height = driver.execute_script("return document.body.scrollHeight") # Get scroll height
-    while True:
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);") # Scroll down to bottom
-        time.sleep(scroll_pause_time) # Wait to load page
-        new_height = driver.execute_script("return document.body.scrollHeight") # Calculate new scroll height and compare with last scroll height
-        if new_height == last_height:
-            break
-        last_height = new_height
-
-    soup = bs4.BeautifulSoup(driver.page_source, 'html.parser')
-
-    driver.quit()
-
-    return soup 
 
 def sync_imdb_top_250():
     
     res = get_imdb_top_250()
-    movies_soup = res.find_all(class_='ipc-metadata-list-summary-item')
+    movies_soup = bs4.BeautifulSoup(res.text, 'html.parser').find(id='__NEXT_DATA__')
+    movies_json_raw = json.loads(movies_soup.get_text()) 
+    movies_json = movies_json_raw["props"]["pageProps"]["pageData"]["chartTitles"]["edges"]
     extracted_at = datetime.datetime.now().isoformat()
 
     movies = []
-    for movie in movies_soup: 
-
-        title = movie.find(class_='ipc-title__text').get_text().split('.', 1)[1].strip()
-        year = movie.find('span', class_='dli-title-metadata-item').text
-        rank = movie.find(class_='ipc-title__text').get_text().split('.', 1)[0]
-        rating = movie.find("span", class_="ipc-rating-star").get_text(strip=True).split('(', 1)[0]
-        rating_count = movie.find('span', text='Votes').find_next_sibling(text=True).strip().replace(',','')
-        link = 'https://imdb.com' + movie.select("a", class_='ipc-title-link-wrapper')[0]['href'].split('?')[0]
+    for movie in movies_json: 
+        title = movie["node"]["titleText"]["text"]
+        id = movie["node"]["id"]
+        year = movie["node"]["releaseYear"]["year"]
+        rank = movie["currentRank"]
+        rating = str(movie["node"]["ratingsSummary"]["aggregateRating"])
+        rating_count = movie["node"]["ratingsSummary"]["voteCount"]
+        link = f"https://imdb.com/title/{id}/"  
         id = hashlib.md5((title + extracted_at).encode('utf-8')).hexdigest() 
 
         data = {
